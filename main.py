@@ -1,6 +1,7 @@
 import streamlit as st
 from file_manager import get_data
 import analysis
+import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
     df = None
@@ -9,11 +10,12 @@ if __name__ == "__main__":
 
     with st.sidebar:
         file_uploader = st.file_uploader("Choose a '.csv' file or excel file.")
-
         data = get_data(file_uploader)
+
         if data is not None:
             # print(df.shape)
             df = analysis.feature_engineering(data)
+
             month_range = analysis.get_month_range(df)
             year_range = analysis.get_year_range(df)
 
@@ -34,9 +36,24 @@ if __name__ == "__main__":
             note = st.text_input("Enter note: ",placeholder = "Medicines")
     
     if df is not None:
-        st.subheader("📊 Month-wise Expense Overview")
-        month_wise_expense = analysis.get_month_wise_expense(df)
-        st.bar_chart(month_wise_expense.set_index("Month"))
+        if year > 0:
+            st.subheader("📊 Month-wise Expense Overview")
+            month_wise_expense = analysis.get_month_wise_expense(df, year)
+            st.bar_chart(month_wise_expense.set_index("Month"))
+
+            year_expense = analysis.get_year_expense(df, year)
+            fig, ax = plt.subplots(figsize=(10, 5))
+            year_expense.boxplot(column="Amount", by="Month", ax=ax)
+
+            # Enhance plot aesthetics
+            ax.set_title(f"Monthly Expense Distribution for {year}")
+            ax.set_xlabel("Month")
+            ax.set_ylabel("Expense Amount")
+            plt.suptitle("")  # Removes default matplotlib title
+
+            # Display plot in Streamlit
+            st.pyplot(fig)
+
 
         if month > 0 and year > 0:
             st.subheader("📅 Monthly Insights")

@@ -29,13 +29,19 @@ def feature_engineering(data):
 
     return df
 
-def get_month_wise_expense(df):
+def get_month_wise_expense(df, year):
     if df is None:
         return
     
-    grouped = df.groupby(by=["Year", "Month"])[["Amount"]].mean().reset_index()
+    filtered = df[df["Year"] == year]
+    grouped = filtered.groupby(by=["Year", "Month"])[["Amount"]].sum().reset_index()
     return grouped.sort_values(by=["Year", "Month"])
 
+def get_year_expense(df, year):
+    if df is None:
+        return
+    
+    return df[df["Year"] == year]
 
 def get_month_insights(df, month_num, year):
     if df is None:

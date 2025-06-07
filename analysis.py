@@ -1,0 +1,85 @@
+import pandas as pd
+from prophet import Prophet
+import traceback
+
+def get_month(date: pd._libs.tslibs.timestamps.Timestamp):
+    return date.month
+def get_year(date: pd._libs.tslibs.timestamps.Timestamp):
+    return date.year
+def get_day(date: pd._libs.tslibs.timestamps.Timestamp):
+    return date.day
+
+def feature_engineering(data):
+    df = data.copy()
+
+    df = df[["Date","Note","Amount"]]
+
+    df["Month"] = df["Date"].apply(get_month)
+    df["Year"] = df["Date"].apply(get_year)
+    df["Day"] = df["Date"].apply(get_day)
+
+    return df
+
+def get_month_wise_expense(df):
+    if df is None:
+        return
+    
+    grouped = df.groupby(by=["Year", "Month"])[["Amount"]].mean().reset_index()
+    return grouped.sort_values(by=["Year", "Month"])
+
+
+def get_month_insights(df, month_num, year):
+    if df is None:
+        return
+    if month_num is None or year is None:
+        return
+    
+    filtered = df[(df["Month"] == month_num) & (df["Year"] == year)]
+    if filtered is None:
+        return
+    
+    return filtered["Amount"].describe()
+
+def get_note_insights(df, note, month_num, year):
+    if note is None or len(note) == 0:
+        return
+    
+    filtered = df[(df["Month"] == month_num) & (df["Year"] == year)]
+    filtered = filtered[filtered["Note"].str.lower().str.contains(note.lower())]
+    return filtered.describe()["Amount"]
+
+def get_percentiles(df):
+    if df is None:
+        return
+    
+    q1, q2, q3, max = df["Amount"].quantile(q=0.25),\
+                      df["Amount"].quantile(q=0.5), \
+                      df["Amount"].quantile(q=0.75), \
+                      df["Amount"].quantile(q=1)
+    
+    return q1, q2, q3, max
+
+def predict_n_months(df, n=12):
+    try:
+        # Step 1: Convert date column to datetime if not already
+        df['Date'] = pd.to_datetime(df['Date'])
+
+        # Step 2: Group by month-end and sum 'Amount'
+        grouped = (
+            df.resample('M', on='Date')['Amount']
+            .sum()
+            .reset_index()
+            .rename(columns={'Date': 'ds', 'Amount': 'y'})
+        )
+
+        model = Prophet()
+        model.fit(grouped)
+
+        future = model.make_future_dataframe(periods=n, freq='M')
+        forecast = model.predict(future)
+
+        return forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(n)
+
+    except Exception:
+        print(traceback.format_exc())
+

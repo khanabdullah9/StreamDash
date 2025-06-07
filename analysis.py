@@ -57,18 +57,20 @@ def get_note_insights(df, note, month_num, year):
     filtered = filtered[filtered["Note"].str.lower().str.contains(note.lower())]
     return filtered.describe()["Amount"]
 
-def get_percentiles(df):
+def get_percentiles(df, month, year):
     if df is None:
         return
     
-    q1, q2, q3, max = df["Amount"].quantile(q=0.25),\
-                      df["Amount"].quantile(q=0.5), \
-                      df["Amount"].quantile(q=0.75), \
-                      df["Amount"].quantile(q=1)
+    filtered = df[(df["Month"] == month) & (df["Year"] == year)]
+    q1, q2, q3, max = filtered["Amount"].quantile(q=0.25),\
+                      filtered["Amount"].quantile(q=0.5), \
+                      filtered["Amount"].quantile(q=0.75), \
+                      filtered["Amount"].quantile(q=1)
     
     return q1, q2, q3, max
 
 def predict_n_months(df, n=12):
+    print("Predicting...")
     try:
         # Step 1: Convert date column to datetime if not already
         df['Date'] = pd.to_datetime(df['Date'])
@@ -87,7 +89,7 @@ def predict_n_months(df, n=12):
         future = model.make_future_dataframe(periods=n, freq='M')
         forecast = model.predict(future)
 
-        return forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(n)
+        return forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].tail(n+1)
 
     except Exception:
         print(traceback.format_exc())

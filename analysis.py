@@ -8,6 +8,15 @@ def get_year(date: pd._libs.tslibs.timestamps.Timestamp):
     return date.year
 def get_day(date: pd._libs.tslibs.timestamps.Timestamp):
     return date.day
+def get_month_range(df):
+    if df is None:
+        return   
+    return df["Month"].unique()
+
+def get_year_range(df):
+    if df is None:
+        return
+    return df["Year"].unique()
 
 def feature_engineering(data):
     df = data.copy()

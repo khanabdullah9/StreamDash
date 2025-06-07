@@ -1,5 +1,4 @@
 import streamlit as st
-from components import SideBar
 from file_manager import get_data
 import analysis
 
@@ -12,6 +11,20 @@ if __name__ == "__main__":
         if data is not None:
             # print(df.shape)
             df = analysis.feature_engineering(data)
+        month_range = analysis.get_month_range(df)
+        year_range = analysis.get_year_range(df)
+
+        if month_range is not None:
+            st.selectbox(
+                "Month:",
+                month_range
+            )
+
+        if year_range is not None:
+            st.selectbox(
+                "Year:",
+                year_range
+            )
     
     if df is not None:
         month_wise_expense = analysis.get_month_wise_expense(df)
